@@ -1,6 +1,11 @@
 # ignore the oh so enfuriating .DS_Store
 .DS_Store
 
+# dont include any data table
+*.csv
+*.tsv
+*.xlsx
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

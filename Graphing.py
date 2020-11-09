@@ -6,21 +6,40 @@ _COLOURS = ['blue', 'red', 'orange', 'black', 'green', 'cyan', 'yellow', 'magent
 DEFAULT_COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
 
 class Graphing2D:
-    def __init__(self, fileName):
-        assert(isinstance(fileName, str))
-        if fileName.endswith('.csv'):
-            self._file = pd.read_csv(fileName, sep=';')
-        elif fileName.endswith('.tsv'):
-            self._file = pd.read_csv(fileName, sep='\t')
-        elif fileName.endswith('.xlsx'):
-            self._file = pd.read_xlsx(fileName)
-        else:
-            raise BadParameter
+    def __init__(self, *args):    
+        self._data = []
+        self._headers = {}
 
-        self._headers = []
-        for h in self._file:
-            self._headers.append(h)
-            self._file[h] = pd.to_numeric(self._file[h], downcast='float')
+        if len(args) == 1:
+            if not isinstance(args[0], str):
+                raise BadParameter
+            if args[0].endswith('.csv'):
+                _file = pd.read_csv(args[0], sep=';')
+            elif args[0].endswith('.tsv'):
+                _file = pd.read_csv(args[0], sep='\t')
+            elif args[0].endswith('.xlsx'):
+                _file = pd.read_xlsx(args[0])
+            else:
+                raise BadParameter
+            i = 0
+            for h in _file:
+                self._data.append(pd.to_numeric(self._data[h], downcast='float'))
+                self._headers.update({h : i})
+                i += 1
+
+        else:
+            for arg in args:
+                if not isinstance(arg, list):
+                    raise BadParameter
+                for c in arg:
+                    if not (isinstance(c, int) or isinstance(c, float)):
+                        raise BadParameter
+            
+            i = 0
+            for arg in args:
+                self._data.append(arg)
+                self._headers.update({str(i) : i})
+                i += 0
 
         self._legends = []
 
@@ -52,7 +71,7 @@ class Graphing2D:
         if _addLegend:
             self._legends.append(_label)
 
-        plt.plot([x + _x_shift for x in self._file[_x]], [y + _y_shift for y in self._file[_y]], label=_label, color=_colour)
+        plt.plot([x + _x_shift for x in self._data[_x]], [y + _y_shift for y in self._data[_y]], label=_label, color=_colour)
 
     def add_scatter(self, x_title, y_title, **kwargs):
         _x = self._get_column_input(x_title)
@@ -78,14 +97,14 @@ class Graphing2D:
         if _addLegend:
             self._legends.append(_label)
 
-        plt.scatter([x + _x_shift for x in self._file[_x]], [y + _y_shift for y in self._file[_y]], label=_label, color=_colour)
+        plt.scatter([x + _x_shift for x in self._data[_x]], [y + _y_shift for y in self._data[_y]], label=_label, color=_colour)
 
     def add_linear_fit(self, x_title, y_title, **kwargs):
         _x = self._get_column_input(x_title)
         _y = self._get_column_input(y_title)
 
         # manage kwargs
-        m, b = np.polyfit(self._file[_x], self._file[_y], 1)
+        m, b = np.polyfit(self._data[_x], self._data[_y], 1)
 
         _autolabel, _legend, _autolegend, _colour, _x_shift, _y_shift = self._manage_kwargs(kwargs)
         if _autolabel:
@@ -111,16 +130,16 @@ class Graphing2D:
         if _addLegend:
             self._legends.append(_label)
 
-        plt.plot([x + _x_shift for x in self._file[_x]], [m*x+b+_y_shift for x in self._file[_x]], label=_label, color=_colour)
+        plt.plot([x + _x_shift for x in self._data[_x]], [m*x+b+_y_shift for x in self._data[_x]], label=_label, color=_colour)
 
     def add_quadratic_fit(self, x_title, y_title, **kwargs):
         _x = self._get_column_input(x_title)
         _y = self._get_column_input(y_title)
 
         # manage kwargs
-        p = np.polyfit(self._file[_x], self._file[_y], 2)
+        p = np.polyfit(self._data[_x], self._data[_y], 2)
 
-        yf = np.array([p[0]*(x**2) + p[1]*x + p[2] for x in self._file[_x]])
+        yf = np.array([p[0]*(x**2) + p[1]*x + p[2] for x in self._data[_x]])
         
 
         _autolabel, _legend, _autolegend, _colour, _x_shift, _y_shift = self._manage_kwargs(kwargs)
@@ -148,20 +167,20 @@ class Graphing2D:
             self._legends.append(_label)
 
 
-        plt.plot([x + _x_shift for x in self._file[_x]], [y + _y_shift for y in yf], label=_label, color=_colour)
+        plt.plot([x + _x_shift for x in self._data[_x]], [y + _y_shift for y in yf], label=_label, color=_colour)
 
     def add_exponential_fit(self, x_title, y_title, **kwargs):
         _x = self._get_column_input(x_title)
         _y = self._get_column_input(y_title)
 
-        for y in self._file[_y]:
+        for y in self._data[_y]:
             if y <= 0:
                 raise NegativeLog
 
         # manage kwargs
-        p = np.polyfit(self._file[_x], np.log(self._file[_y]), 1)
+        p = np.polyfit(self._data[_x], np.log(self._data[_y]), 1)
 
-        yf = np.array([np.exp(p[1]) * np.exp(p[0]*x) for x in self._file[_x]])
+        yf = np.array([np.exp(p[1]) * np.exp(p[0]*x) for x in self._data[_x]])
         
         _autolabel, _legend, _autolegend, _colour, _x_shift, _y_shift = self._manage_kwargs(kwargs)
         if _autolabel:
@@ -187,7 +206,7 @@ class Graphing2D:
         if _addLegend:
             self._legends.append(_label)
 
-        plt.plot([x + _x_shift for x in self._file[_x]], [y + _y_shift for y in yf], label=_label, color=_colour)
+        plt.plot([x + _x_shift for x in self._data[_x]], [y + _y_shift for y in yf], label=_label, color=_colour)
 
     def set_title(self, title):
         if not isinstance(title, str):
@@ -254,15 +273,20 @@ class Graphing2D:
 
     def _get_column_input(self, param):
         if isinstance(param, str):
-            return input
-        elif isinstance(param, int):
             return self._headers[param]
+        elif isinstance(param, int):
+            return param
         raise BadParameter
 
     def show(self):
         if len(self._legends) > 0:
             plt.legend(self._legends)
         plt.show()
+
+    @staticmethod
+    def help():
+        s = '*Insert documention*. Will be added in future update :)'
+        print(s)
             
 class BadParameter(Exception):
     pass
