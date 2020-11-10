@@ -44,17 +44,11 @@ class Graphing2D:
         self._legends = []
         self._x = []
         self._y = []
-        self._z = []
-        self._w = []
         self.set_working_data(0, 1)
 
     def set_working_data(self, x_name, y_name, z_name=-1, w_name=-1):
         self._x = self._get_column_input(x_name)
         self._y = self._get_column_input(y_name)
-        if z_name >=0:
-            self._z = self._get_column_input(z_name)
-        if w_name >=0:
-            self._z = self._get_column_input(w_name)
 
     def add_plot(self, *args, **kwargs):
         # accepted kwargs
@@ -224,7 +218,7 @@ class Graphing2D:
         if _addLegend:
             self._legends.append(_label)
 
-        plt.plot([x + _x_shift for x in self._data[self.self._x]], [y + self._y_shift for y in yf], label=_label, color=_colour)
+        plt.plot([x + _x_shift for x in self._data[self._x]], [y + self._y_shift for y in yf], label=_label, color=_colour)
 
     def set_title(self, title):
         if not isinstance(title, str):
@@ -329,7 +323,7 @@ class Graphing2D:
         s += '\t- x_shift=float -> shifts the plot by the input in the "x" axis\n'
         s += '\t- y_shift=float -> like x_shift but in the "y" axis\n'
         print(s)
-            
+
 class BadParameter(Exception):
     # print('Bad parameter was given')
     pass
