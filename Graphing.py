@@ -42,20 +42,34 @@ class Graphing2D:
                 i += 0
 
         self._legends = []
+        self._x = []
+        self._y = []
+        self._z = []
+        self._w = []
+        self.set_working_data(0, 1)
 
-    def add_plot(self, x_title, y_title, **kwargs):
+    def set_working_data(self, x_name, y_name, z_name=-1, w_name=-1):
+        self._x = self._get_column_input(x_name)
+        self._y = self._get_column_input(y_name)
+        if z_name >=0:
+            self._z = self._get_column_input(z_name)
+        if w_name >=0:
+            self._z = self._get_column_input(w_name)
+
+    def add_plot(self, *args, **kwargs):
         # accepted kwargs
         # autolabel = bool
         # autolegend = bool
         # legend = string (is overridden by autolegend)
-        _x = self._get_column_input(x_title)
-        _y = self._get_column_input(y_title)
+
+        if args:
+            self._manage_working_data_args(args)        
 
         # manage kwargs
         _autolabel, _legend, _autolegend, _colour, _x_shift, _y_shift = self._manage_kwargs(kwargs)
         if _autolabel:
-            plt.xlabel(_x)
-            plt.ylabel(_y)
+            plt.xlabel(self._x)
+            plt.ylabel(self._y)
         _label = 'plot'
         _addLegend = False
         if _legend != None:
@@ -63,7 +77,7 @@ class Graphing2D:
             _addLegend = True
         if _autolegend != None:
             if _autolegend:
-                _label = _y
+                _label = self._y
                 _addLegend = True
             else:
                 _addLegend = False
@@ -71,17 +85,18 @@ class Graphing2D:
         if _addLegend:
             self._legends.append(_label)
 
-        plt.plot([x + _x_shift for x in self._data[_x]], [y + _y_shift for y in self._data[_y]], label=_label, color=_colour)
+        plt.plot([x + _x_shift for x in self._data[self._x]], [y + _y_shift for y in self._data[self._y]], label=_label, color=_colour)
 
-    def add_scatter(self, x_title, y_title, **kwargs):
-        _x = self._get_column_input(x_title)
-        _y = self._get_column_input(y_title)
+    def add_scatter(self, *args, **kwargs):
+
+        if args:
+            self._manage_working_data_args(args) 
 
         # manage kwargs
         _autolabel, _legend, _autolegend, _colour, _x_shift, _y_shift = self._manage_kwargs(kwargs)
         if _autolabel:
-            plt.xlabel(_x)
-            plt.ylabel(_y)
+            plt.xlabel(self._x)
+            plt.ylabel(self._y)
         _label = 'plot'
         _addLegend = False
         if _legend != None:
@@ -89,7 +104,7 @@ class Graphing2D:
             _addLegend = True
         if _autolegend != None:
             if _autolegend:
-                _label = _y
+                _label = self._y
                 _addLegend = True
             else:
                 _addLegend = False
@@ -97,19 +112,20 @@ class Graphing2D:
         if _addLegend:
             self._legends.append(_label)
 
-        plt.scatter([x + _x_shift for x in self._data[_x]], [y + _y_shift for y in self._data[_y]], label=_label, color=_colour)
+        plt.scatter([x + _x_shift for x in self._data[self._x]], [y + _y_shift for y in self._data[self._y]], label=_label, color=_colour)
 
-    def add_linear_fit(self, x_title, y_title, **kwargs):
-        _x = self._get_column_input(x_title)
-        _y = self._get_column_input(y_title)
+    def add_linear_fit(self, *args, **kwargs):
+
+        if args:
+            self._manage_working_data_args(args)  
 
         # manage kwargs
-        m, b = np.polyfit(self._data[_x], self._data[_y], 1)
+        m, b = np.polyfit(self._data[self._x], self._data[self._y], 1)
 
         _autolabel, _legend, _autolegend, _colour, _x_shift, _y_shift = self._manage_kwargs(kwargs)
         if _autolabel:
-            plt.xlabel(_x)
-            plt.ylabel(_y)
+            plt.xlabel(self._x)
+            plt.ylabel(self._y)
         _label = 'plot'
         _addLegend = False
         if _legend != None:
@@ -117,7 +133,7 @@ class Graphing2D:
             _addLegend = True
         if _autolegend != None:
             if _autolegend:
-                _label = 'Linear Fit: m = {0}, b = {1}\n'.format(round(m, 2), round(b, 2)) + _y
+                _label = 'Linear Fit: m = {0}, b = {1}\n'.format(round(m, 2), round(b, 2)) + self._y
                 _addLegend = True
             else:
                 _addLegend = False
@@ -130,22 +146,23 @@ class Graphing2D:
         if _addLegend:
             self._legends.append(_label)
 
-        plt.plot([x + _x_shift for x in self._data[_x]], [m*x+b+_y_shift for x in self._data[_x]], label=_label, color=_colour)
+        plt.plot([x + _x_shift for x in self._data[self._x]], [m*x+b+_y_shift for x in self._data[self._x]], label=_label, color=_colour)
 
-    def add_quadratic_fit(self, x_title, y_title, **kwargs):
-        _x = self._get_column_input(x_title)
-        _y = self._get_column_input(y_title)
+    def add_quadratic_fit(self, *args, **kwargs):
+
+        if args:
+            self._manage_working_data_args(args)  
 
         # manage kwargs
-        p = np.polyfit(self._data[_x], self._data[_y], 2)
+        p = np.polyfit(self._data[self._x], self._data[self._y], 2)
 
-        yf = np.array([p[0]*(x**2) + p[1]*x + p[2] for x in self._data[_x]])
+        yf = np.array([p[0]*(x**2) + p[1]*x + p[2] for x in self._data[self._x]])
         
 
         _autolabel, _legend, _autolegend, _colour, _x_shift, _y_shift = self._manage_kwargs(kwargs)
         if _autolabel:
-            plt.xlabel(_x)
-            plt.ylabel(_y)
+            plt.xlabel(self._x)
+            plt.ylabel(self._y)
         _label = 'plot'
         _addLegend = False
         if _legend != None:
@@ -153,7 +170,7 @@ class Graphing2D:
             _addLegend = True
         if _autolegend != None:
             if _autolegend:
-                _label = 'Quadratic Fit: a = {0}, b = {1}, c = {2}\n'.format(round(p[0], 2), round(p[1], 2), round(p[2], 2)) + _y
+                _label = 'Quadratic Fit: a = {0}, b = {1}, c = {2}\n'.format(round(p[0], 2), round(p[1], 2), round(p[2], 2)) + self._y
                 _addLegend = True
             else:
                 _addLegend = False
@@ -167,25 +184,26 @@ class Graphing2D:
             self._legends.append(_label)
 
 
-        plt.plot([x + _x_shift for x in self._data[_x]], [y + _y_shift for y in yf], label=_label, color=_colour)
+        plt.plot([x + _x_shift for x in self._data[self._x]], [y + _y_shift for y in yf], label=_label, color=_colour)
 
-    def add_exponential_fit(self, x_title, y_title, **kwargs):
-        _x = self._get_column_input(x_title)
-        _y = self._get_column_input(y_title)
+    def add_exponential_fit(self, *args, **kwargs):
 
-        for y in self._data[_y]:
+        if args:
+            self._manage_working_data_args(args) 
+
+        for y in self._data[self._y]:
             if y <= 0:
                 raise NegativeLog
 
         # manage kwargs
-        p = np.polyfit(self._data[_x], np.log(self._data[_y]), 1)
+        p = np.polyfit(self._data[self._x], np.log(self._data[self._y]), 1)
 
-        yf = np.array([np.exp(p[1]) * np.exp(p[0]*x) for x in self._data[_x]])
+        yf = np.array([np.exp(p[1]) * np.exp(p[0]*x) for x in self._data[self._x]])
         
-        _autolabel, _legend, _autolegend, _colour, _x_shift, _y_shift = self._manage_kwargs(kwargs)
+        _autolabel, _legend, _autolegend, _colour, _x_shift, self._y_shift = self._manage_kwargs(kwargs)
         if _autolabel:
-            plt.xlabel(_x)
-            plt.ylabel(_y)
+            plt.xlabel(self._x)
+            plt.ylabel(self._y)
         _label = 'plot'
         _addLegend = False
         if _legend != None:
@@ -193,7 +211,7 @@ class Graphing2D:
             _addLegend = True
         if _autolegend != None:
             if _autolegend:
-                _label = 'Exponential Fit: k = {0}, '.format(round(p[0], 2)) + r'$\gamma$' + ' = {1}\n'.format(round(p[1], 2)) + _y
+                _label = 'Exponential Fit: k = {0}, '.format(round(p[0], 2)) + r'$\gamma$' + ' = {1}\n'.format(round(p[1], 2)) + self._y
                 _addLegend = True
             else:
                 _addLegend = False
@@ -206,7 +224,7 @@ class Graphing2D:
         if _addLegend:
             self._legends.append(_label)
 
-        plt.plot([x + _x_shift for x in self._data[_x]], [y + _y_shift for y in yf], label=_label, color=_colour)
+        plt.plot([x + _x_shift for x in self._data[self.self._x]], [y + self._y_shift for y in yf], label=_label, color=_colour)
 
     def set_title(self, title):
         if not isinstance(title, str):
@@ -236,7 +254,7 @@ class Graphing2D:
 
         if 'legend' in kwargs:
             if not isinstance(kwargs['legend'], str):
-                BadParameter
+                raise BadParameter
             _legend = kwargs['legend']
         else:
             _legend = None
@@ -271,6 +289,16 @@ class Graphing2D:
 
         return _autolabel, _legend, _autolegend, _colour, _x_shift, _y_shift
 
+    def _manage_working_data_args(self, args):
+        if not len(args) == 2:
+            raise BadParameter
+        for arg in args:
+            if not (isinstance(arg, str) or isinstance(arg, int)):
+                raise BadParameter
+
+        self._x = self._get_column_input(args[0])
+        self._y = self._get_column_input(args[1])
+
     def _get_column_input(self, param):
         if isinstance(param, str):
             return self._headers[param]
@@ -285,19 +313,40 @@ class Graphing2D:
 
     @staticmethod
     def help():
-        s = '*Insert documention*. Will be added in future update :)'
+        s = 'This library simplifies the graphic representations of datasets that can be python lists or excel-like files.'
+        s += 'When calling Graphing2D for the first time you have two options: either\n'
+        s += '\t- pass a string with the file path to a .csv/.tsv/.xlsx file\n'
+        s += '\t- pass all the lists of (numerical) values\n\n'
+        s += 'Although you can load multiple data "axis" only 2 (4 projected) can be active at the same time as "x" and "y".\n'
+        s += 'This can be set with the "set_working_data()" method.\n\n'
+        s += 'The different "add_...()" methods allow you to plot the data. Passing data axis as arguments changes the active axis.\n'
+        s += 'Options can be passed as "add_...(Option1=parameter, Option2=parameter, ...)\n'
+        s += 'The options currently available are:\n'
+        s += '\t- autolabel=bool -> labels the drawn plot automagically\n'
+        s += '\t- legend=str -> adds a user-written legend to the drawn plot\n'
+        s += '\t- autolegend=bool -> automagically adds a legend to the drawn plot (overrides "legend")\n'
+        s += '\t- colour/color=str -> draws the plot with the specified colour (for more info visit matplotlibs documentation)\n'
+        s += '\t- x_shift=float -> shifts the plot by the input in the "x" axis\n'
+        s += '\t- y_shift=float -> like x_shift but in the "y" axis\n'
         print(s)
             
 class BadParameter(Exception):
+    # print('Bad parameter was given')
     pass
 
 class NegativeLog(Exception):
+    # print('Exponential fit with negative data in son yet supported')
     pass
 
 if __name__ == '__main__':
-    graphing = Graphing2D('Datos_Lauti_SuperAcotado.csv')
-    graphing.add_plot(0, 1, legend='Datos del Giroscopio', x_shift=-4)
-    graphing.add_linear_fit(0, 1, customlegend='Datos', color=DEFAULT_COLORS[1], x_shift=-4)
-    graphing.set_labels('tiempo (s)', 'Velocidad Angular (rad/s)')
-    graphing.set_title('Velocidad Angular')
-    graphing.show()
+    a = list(range(7))
+    b = [0, 2, 4.1, 5.9, 8,2, 9.8]
+    c = [0, 1.05, 4.1, 9.2, 15, 26, 35]
+
+    g = Graphing2D(a, b, c)
+
+    g.add_plot()
+    g.add_linear_fit(colour='blue')
+    g.add_plot(0, 2, colour='orange')
+    g.add_quadratic_fit(colour='red')
+    g.show()
