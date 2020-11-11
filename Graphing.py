@@ -11,8 +11,6 @@ class Graphing2D:
         self._headers = {}
         self._working_headers = ['0', '1']
 
-        self._plot_id = 0
-
         if not args:
             raise ParameterMissing
 
@@ -262,6 +260,7 @@ class Graphing2D:
         s += '\t- x_shift=float -> shifts the plot by the input in the "x" axis\n'
         s += '\t- y_shift=float -> like x_shift but in the "y" axis\n'
         print(s)
+
 
 class BadParameter(Exception):
     # print('Bad parameter was given')
