@@ -1,9 +1,11 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+from Logging import log
 
 _COLOURS = ['blue', 'red', 'orange', 'black', 'green', 'cyan', 'yellow', 'magenta', 'white', 'b', 'g', 'r', 'c', 'm', 'k', 'w', '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
 DEFAULT_COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+_ERRORBAR_OPTION_TYPES = {'ecolor' : '', 'elinewidth' : 0.0, 'capsize' : 0.0, 'capthick' : 0.0, 'barsabove' : False, 'lolims' : False, 'uplims' : False, 'xlolims' : False, 'xuplims' : False, 'errorevery' : 1}
 
 class Graphing2D:
     def __init__(self, *args):    
@@ -48,15 +50,68 @@ class Graphing2D:
         self._legends = []
         self._x = 0
         self._y = 1
+        self._x_error = None
+        self._y_error = None
+
+        self._errorbar_options = {
+            'ecolor' : DEFAULT_COLORS[0],
+            'elinewidth' : None,
+            'capsize' : 0.0,
+            'capthick' : None,
+            'barsabove' : False,
+            'lolims' : False,
+            'uplims' : False,
+            'xlolims' : False,
+            'xuplims' : False,
+            'errorevery' : 1
+        }
+
         self.set_working_data(0, 1)
 
-    def set_working_data(self, x_name, y_name):
-        self._x = self._get_column_input(x_name)
-        self._y = self._get_column_input(y_name)
-        if self._x >= len(self._data) or self._x >= len(self._data):
+    def set_working_data(self, x_name, y_name, x_error_name=None, y_error_name=None):
+        x = self._get_column_input(x_name)
+        y = self._get_column_input(y_name)
+        if x >= len(self._data) or y >= len(self._data):
             raise NonExistingData
+        self._x = x
+        self._y = y
+        if not x_error_name is None:
+            x_error = self._get_column_input(x_error_name)
+            if x_error >= len(self._data):
+                raise NonExistingData
+            self._x_error = x_error
+        if not y_error_name is None:
+            y_error = self._get_column_input(y_error_name)
+            if y_error >= len(self._data):
+                raise NonExistingData
+            self._y_error = y_error
         self._working_headers[0] = str(list(self._headers.keys())[self._x])
         self._working_headers[1] = str(list(self._headers.keys())[self._y])
+
+    def set_working_error_data(self, x_error_name, y_error_name):
+        x_error = self._get_column_input(x_error_name)
+        y_error = self._get_column_input(y_error_name)
+        if x_error >= len(self._data) or y_error >= len(self._data):
+            raise NonExistingData
+        self._x_error = x_error
+        self._y_error = y_error
+
+    def set_errorbars_options(self, **kwargs):
+        for key in kwargs.keys():
+            if key in _ERRORBAR_OPTION_TYPES:
+                if isinstance(_ERRORBAR_OPTION_TYPES[key], bool) and isinstance(kwargs[key], bool):
+                    pass
+                elif kwargs[key] is None:
+                    pass
+                elif isinstance(_ERRORBAR_OPTION_TYPES[key], float) and (isinstance(kwargs[key], float) or isinstance(kwargs[key], int)):
+                    pass
+                elif type(_ERRORBAR_OPTION_TYPES[key]) == type(kwargs[key]):
+                    pass
+                else:
+                    raise BadParameter
+                self._errorbar_options[key] = kwargs[key]
+            else:
+                log.warning('In "set_errorbars_options: The passed key "{0}" is not valid'.format(key))
 
     def add_plot(self, *args, **kwargs):
         # accepted kwargs
@@ -68,9 +123,14 @@ class Graphing2D:
             self._manage_working_data_args(args)        
 
         # manage kwargs
-        _finallegend, _colour, _x_shift, _y_shift = self._manage_kwargs(kwargs)
+        _finallegend, _colour, _x_shift, _y_shift, _errorbars = self._manage_kwargs(kwargs)
 
-        plt.plot([x + _x_shift for x in self._data[self._x]], [y + _y_shift for y in self._data[self._y]], label=_finallegend, color=_colour)
+        X = [x + _x_shift for x in self._data[self._x]]
+        Y = [y + _y_shift for y in self._data[self._y]]
+
+        plt.plot(X, Y, label=_finallegend, color=_colour)
+        if _errorbars:
+            self._add_errorbars(X, Y) 
 
     def add_scatter(self, *args, **kwargs):
 
@@ -78,9 +138,14 @@ class Graphing2D:
             self._manage_working_data_args(args) 
 
         # manage kwargs
-        _finallegend, _colour, _x_shift, _y_shift = self._manage_kwargs(kwargs)
+        _finallegend, _colour, _x_shift, _y_shift, _errorbars = self._manage_kwargs(kwargs)
 
-        plt.scatter([x + _x_shift for x in self._data[self._x]], [y + _y_shift for y in self._data[self._y]], label=_finallegend, color=_colour)
+        X = [x + _x_shift for x in self._data[self._x]]
+        Y = [y + _y_shift for y in self._data[self._y]]
+
+        plt.scatter(X, Y, label=_finallegend, color=_colour)
+        if _errorbars:
+            self._add_errorbars(X, Y) 
 
     def add_linear_fit(self, *args, **kwargs):
 
@@ -92,9 +157,14 @@ class Graphing2D:
 
         yf = np.array([m*x+b for x in self._data[self._x]])
 
-        _finallegend, _colour, _x_shift, _y_shift = self._manage_kwargs(kwargs, fit='linear', m=m, b=b)
+        _finallegend, _colour, _x_shift, _y_shift, _errorbars = self._manage_kwargs(kwargs, fit='linear', m=m, b=b)
 
-        plt.plot([x + _x_shift for x in self._data[self._x]], [y + _y_shift for y in yf], label=_finallegend, color=_colour)
+        X = [x + _x_shift for x in self._data[self._x]]
+        Y = [y + _y_shift for y in yf]
+
+        plt.plot(X, Y, label=_finallegend, color=_colour)
+        if _errorbars:
+            self._add_errorbars(X, Y)
 
     def add_quadratic_fit(self, *args, **kwargs):
 
@@ -106,9 +176,14 @@ class Graphing2D:
 
         yf = np.array([p[0]*(x**2) + p[1]*x + p[2] for x in self._data[self._x]])
 
-        _finallegend, _colour, _x_shift, _y_shift = self._manage_kwargs(kwargs, fit='quadratic', a=p[0], b=p[1], c=p[2])
+        _finallegend, _colour, _x_shift, _y_shift, _errorbars = self._manage_kwargs(kwargs, fit='quadratic', a=p[0], b=p[1], c=p[2])
 
-        plt.plot([x + _x_shift for x in self._data[self._x]], [y + _y_shift for y in yf], label=_finallegend, color=_colour)
+        X = [x + _x_shift for x in self._data[self._x]]
+        Y = [y + _y_shift for y in yf]
+
+        plt.plot(X, Y, label=_finallegend, color=_colour)
+        if _errorbars:
+            self._add_errorbars(X, Y)
 
     def add_exponential_fit(self, *args, **kwargs):
 
@@ -124,9 +199,14 @@ class Graphing2D:
 
         yf = np.array([np.exp(p[1]) * np.exp(p[0]*x) for x in self._data[self._x]])
         
-        _finallegend, _colour, _x_shift, _y_shift = self._manage_kwargs(kwargs, fit='exponential', k=np.exp(p[1]), gamma = p[0])
+        _finallegend, _colour, _x_shift, _y_shift, _errorbars = self._manage_kwargs(kwargs, fit='exponential', k=np.exp(p[1]), gamma = p[0])
 
-        plt.plot([x + _x_shift for x in self._data[self._x]], [y + _y_shift for y in yf], label=_finallegend, color=_colour)
+        X = [x + _x_shift for x in self._data[self._x]]
+        Y = [y + _y_shift for y in yf]
+
+        plt.plot(X, Y, label=_finallegend, color=_colour)
+        if _errorbars:
+            self._add_errorbars(X, Y)
 
     def set_title(self, title):
         if not isinstance(title, str):
@@ -140,14 +220,22 @@ class Graphing2D:
         plt.xlabel(x_label)
         plt.ylabel(y_label)
 
+    def _add_errorbars(self, X, Y):
+        XError = self._data[self._x_error]
+        YError = self._data[self._y_error]
+        plt.errorbar(X, Y, XError, YError, ecolor=self._errorbar_options['ecolor'], elinewidth=self._errorbar_options['elinewidth'],
+            capsize=self._errorbar_options['capsize'], barsabove=self._errorbar_options['barsabove'], lolims=self._errorbar_options['lolims'],
+            uplims=self._errorbar_options['uplims'], xlolims=self._errorbar_options['xlolims'], xuplims=self._errorbar_options['xuplims'],
+            errorevery=self._errorbar_options['errorevery'], capthick=self._errorbar_options['capthick'])
+
     def _manage_kwargs(self, kwargs, **nkwargs):
         _autoaxis = False
         _autolegend = None
-
-        _finallegend = '_nolegend_'
+        _finallegend = '_nolegend_' # internal. gets updated with legend, autolegend or customlegend (for fits)
         _colour = DEFAULT_COLORS[0]
         _x_shift = 0
         _y_shift = 0
+        _errorbars = False
 
         if 'autoaxis' in kwargs:
             if not isinstance(kwargs['autoaxis'], bool):
@@ -213,10 +301,16 @@ class Graphing2D:
                 raise BadParameter
             _y_shift = kwargs['y_shift']
 
-        return _finallegend, _colour, _x_shift, _y_shift
+        if 'errorbars' in kwargs:
+            if not isinstance(kwargs['errorbars'], bool):
+                raise BadParameter
+            if kwargs['errorbars']:
+                _errorbars = True
+
+        return _finallegend, _colour, _x_shift, _y_shift, _errorbars
 
     def _manage_working_data_args(self, args):
-        if not len(args) == 2:
+        if not (len(args) == 2 or len(args) == 4):
             raise BadParameter
         for arg in args:
             if not (isinstance(arg, str) or isinstance(arg, int)):
@@ -224,6 +318,9 @@ class Graphing2D:
 
         self._x = self._get_column_input(args[0])
         self._y = self._get_column_input(args[1])
+        if len(args) == 4:
+            self._x_error = self._get_column_input(args[2])
+            self._y_error = self._get_column_input(args[3])
 
     def _get_column_input(self, param):
         if isinstance(param, str):
@@ -287,7 +384,7 @@ if __name__ == '__main__':
     g = Graphing2D(a, b, c)
 
     g.add_plot()
-    g.add_linear_fit(colour='blue')
-    g.add_plot(0, 2, colour='orange')
-    g.add_quadratic_fit(colour='red')
+    g.add_linear_fit(colour='blue', autolegend=True)
+    g.add_plot(0, 2, colour='orange', autolegend=True)
+    g.add_quadratic_fit(colour='red', autolegend=True)
     g.show()
