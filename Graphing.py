@@ -1,11 +1,15 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib import rcParams
 import numpy as np
 from Logging import log
 
 _COLOURS = ['blue', 'red', 'orange', 'black', 'green', 'cyan', 'yellow', 'magenta', 'white', 'b', 'g', 'r', 'c', 'm', 'k', 'w', '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
 DEFAULT_COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
 _ERRORBAR_OPTION_TYPES = {'ecolor' : '', 'elinewidth' : 0.0, 'capsize' : 0.0, 'capthick' : 0.0, 'barsabove' : False, 'lolims' : False, 'uplims' : False, 'xlolims' : False, 'xuplims' : False, 'errorevery' : 1}
+_PLOT_KWARGS = ['autoaxis', 'autolegend', 'legend', 'customlegend', 'colour', 'color', 'x_shift', 'y_shift', 'errorbars']
+_SCATTER_KWARGS = ['marker', 's']
+_SCATTER_STYLES = ['.', ',', 'o', 'v', '^', '<', '>', '1', '2', '3', '4', '8', 's', 'p', 'P', '*', 'h', 'H', '+', 'x', 'X', 'D', 'd', '|', '_', 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] # or expression between $
 
 class Graphing2D:
     def __init__(self, *args):    
@@ -111,7 +115,7 @@ class Graphing2D:
                     raise BadParameter
                 self._errorbar_options[key] = kwargs[key]
             else:
-                log.warning('In "set_errorbars_options: The passed key "{0}" is not valid'.format(key))
+                log.warning('In "set_errorbars_options": The passed key "{0}" is not valid'.format(key))
 
     def add_plot(self, *args, **kwargs):
         # accepted kwargs
@@ -123,7 +127,7 @@ class Graphing2D:
             self._manage_working_data_args(args)        
 
         # manage kwargs
-        _finallegend, _colour, _x_shift, _y_shift, _errorbars = self._manage_kwargs(kwargs)
+        _finallegend, _colour, _x_shift, _y_shift, _errorbars, _marker, _s = self._manage_kwargs(kwargs)
 
         X = [x + _x_shift for x in self._data[self._x]]
         Y = [y + _y_shift for y in self._data[self._y]]
@@ -138,12 +142,12 @@ class Graphing2D:
             self._manage_working_data_args(args) 
 
         # manage kwargs
-        _finallegend, _colour, _x_shift, _y_shift, _errorbars = self._manage_kwargs(kwargs)
+        _finallegend, _colour, _x_shift, _y_shift, _errorbars, _marker, _s = self._manage_kwargs(kwargs, scatter=True)
 
         X = [x + _x_shift for x in self._data[self._x]]
         Y = [y + _y_shift for y in self._data[self._y]]
 
-        plt.scatter(X, Y, label=_finallegend, color=_colour)
+        plt.scatter(X, Y, label=_finallegend, color=_colour, marker=_marker, s=_s)
         if _errorbars:
             self._add_errorbars(X, Y) 
 
@@ -157,7 +161,7 @@ class Graphing2D:
 
         yf = np.array([m*x+b for x in self._data[self._x]])
 
-        _finallegend, _colour, _x_shift, _y_shift, _errorbars = self._manage_kwargs(kwargs, fit='linear', m=m, b=b)
+        _finallegend, _colour, _x_shift, _y_shift, _errorbars, _marker, _s = self._manage_kwargs(kwargs, fit='linear', m=m, b=b)
 
         X = [x + _x_shift for x in self._data[self._x]]
         Y = [y + _y_shift for y in yf]
@@ -176,7 +180,7 @@ class Graphing2D:
 
         yf = np.array([p[0]*(x**2) + p[1]*x + p[2] for x in self._data[self._x]])
 
-        _finallegend, _colour, _x_shift, _y_shift, _errorbars = self._manage_kwargs(kwargs, fit='quadratic', a=p[0], b=p[1], c=p[2])
+        _finallegend, _colour, _x_shift, _y_shift, _errorbars, _marker, _s = self._manage_kwargs(kwargs, fit='quadratic', a=p[0], b=p[1], c=p[2])
 
         X = [x + _x_shift for x in self._data[self._x]]
         Y = [y + _y_shift for y in yf]
@@ -199,7 +203,7 @@ class Graphing2D:
 
         yf = np.array([np.exp(p[1]) * np.exp(p[0]*x) for x in self._data[self._x]])
         
-        _finallegend, _colour, _x_shift, _y_shift, _errorbars = self._manage_kwargs(kwargs, fit='exponential', k=np.exp(p[1]), gamma = p[0])
+        _finallegend, _colour, _x_shift, _y_shift, _errorbars, _marker, _s = self._manage_kwargs(kwargs, fit='exponential', k=np.exp(p[1]), gamma = p[0])
 
         X = [x + _x_shift for x in self._data[self._x]]
         Y = [y + _y_shift for y in yf]
@@ -207,6 +211,15 @@ class Graphing2D:
         plt.plot(X, Y, label=_finallegend, color=_colour)
         if _errorbars:
             self._add_errorbars(X, Y)
+
+    def add_marker(self, x_pos, y_pos, **kwargs):
+        # to date only args supported is style (shape)
+        _finallegend, _colour, _x_shift, _y_shift, _errorbars, _marker, _s = self._manage_kwargs(kwargs, scatter=True)
+        
+        x = x_pos + _x_shift
+        y = y_pos + _y_shift
+
+        plt.scatter(x, y, marker=_marker, label=_finallegend, color=_colour, s=_s)
 
     def set_title(self, title):
         if not isinstance(title, str):
@@ -236,6 +249,12 @@ class Graphing2D:
         _x_shift = 0
         _y_shift = 0
         _errorbars = False
+        _marker = rcParams['scatter.marker']
+        _s = rcParams['lines.markersize'] ** 2
+
+        for k in kwargs:
+            if not (k in _PLOT_KWARGS or k in _SCATTER_KWARGS):
+                log.warning('In "plotting": The passed key "{0}" is not valid'.format(k))
 
         if 'autoaxis' in kwargs:
             if not isinstance(kwargs['autoaxis'], bool):
@@ -307,14 +326,30 @@ class Graphing2D:
             if kwargs['errorbars']:
                 _errorbars = True
 
-        return _finallegend, _colour, _x_shift, _y_shift, _errorbars
+        if 'scatter' in nkwargs:
+            if nkwargs['scatter']:
+                if 'marker' in kwargs:
+                    if not (isinstance(kwargs['marker'], str) or isinstance(kwargs['marker'], int)):
+                        raise BadParameter
+                    if isinstance(kwargs['marker'], str):
+                        if kwargs['marker'] in _SCATTER_STYLES or (kwargs['marker'].startswith('$') and kwargs['marker'].endswith('4')):
+                            _marker = kwargs['marker']
+                    elif kwargs['marker'] in _SCATTER_STYLES:
+                        _marker = kwargs['marker']
+                if 's' in kwargs:
+                    if not (isinstance(kwargs['s'], float) or isinstance(kwargs['s'], int)):
+                        raise BadParameter
+                    _s = kwargs['s']
+
+        return _finallegend, _colour, _x_shift, _y_shift, _errorbars, _marker, _s
 
     def _manage_working_data_args(self, args):
-        if not (len(args) == 2 or len(args) == 4):
+        if len(args) == 2:
+            self.set_working_data(args[0], args[1])
+        elif len(args) == 4:
+            self.set_working_data(args[0], args[1], args[2], args[3])
+        else:
             raise BadParameter
-        for arg in args:
-            if not (isinstance(arg, str) or isinstance(arg, int)):
-                raise BadParameter
 
         self._x = self._get_column_input(args[0])
         self._y = self._get_column_input(args[1])
@@ -357,7 +392,6 @@ class Graphing2D:
         s += '\t- x_shift=float -> shifts the plot by the input in the "x" axis\n'
         s += '\t- y_shift=float -> like x_shift but in the "y" axis\n'
         print(s)
-
 
 class BadParameter(Exception):
     # print('Bad parameter was given')
