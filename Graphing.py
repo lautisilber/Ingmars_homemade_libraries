@@ -20,19 +20,23 @@ class Graphing2D:
         if not args:
             raise ParameterMissing
 
-        unraw_args = []
-        for arg in args:
-            if isinstance(arg, str) or isinstance(arg, np.ndarray):
-                unraw_args.append(arg)
-            elif isinstance(arg, list):
-                if False in [isinstance(i, float) or isinstance(i, int) for i in arg]:
-                    #is list of lists
-                    for l in arg:
-                        unraw_args.append(l)
-                else:
-                    unraw_args.append(arg)
+        processed_args = []
 
         for arg in args:
+            if isinstance(arg, str):
+                processed_args.append(arg)
+            elif isinstance(arg, list) or isinstance(arg, np.ndarray):
+                if not False in [isinstance(e, float) or isinstance(e, int) for e in arg]:
+                    # list of numbers
+                    processed_args.append(arg)
+                elif not False in [isinstance(e, list) or isinstance(e, np.ndarray) or isinstance(e, str) for e in arg]:
+                    # list of lists or directories
+                    for e in arg:
+                        processed_args.append(arg)
+                else:
+                    raise BadParameter
+
+        for arg in processed_args:
             if isinstance(arg, str):
                 if arg.endswith('.csv'):
                     _file = pd.read_csv(arg, sep=';')
@@ -425,8 +429,8 @@ if __name__ == '__main__':
     aerror = [1 for i in a]
     berror = [0.75 for i in a]
 
-    g = Graphing2D(a, b, aerror, berror)
-    g.add_marker(a[5], b[5], legend='supermarker', colour=DEFAULT_COLORS[6], marker='H', s=1500)
+    g = Graphing2D([a, b], [aerror, berror])
+    g.add_marker(a[5], b[5], legend='supermarker', colour=DEFAULT_COLORS[6], marker='H', s=150)
     g.set_working_data(0, 1, 2, 3)
     g.set_errorbars_options(capsize=1.5, ecolor='cyan')
     g.add_plot(errorbars=True)
