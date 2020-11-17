@@ -17,6 +17,31 @@ class Graphing2D:
         self._headers = {}
         self._working_headers = ['0', '1']
 
+        for arg in args:
+            self.add_data(arg)
+
+        self._legends = []
+        self._x = 0
+        self._y = 1
+        self._x_error = None
+        self._y_error = None
+
+        self._errorbar_options = {
+            'ecolor' : DEFAULT_COLORS[0],
+            'elinewidth' : None,
+            'capsize' : 0.0,
+            'capthick' : None,
+            'barsabove' : False,
+            'lolims' : False,
+            'uplims' : False,
+            'xlolims' : False,
+            'xuplims' : False,
+            'errorevery' : 1
+        }
+
+        self.set_working_data(0, 1)
+
+    def add_data(self, *args):
         if not args:
             raise ParameterMissing
 
@@ -32,7 +57,7 @@ class Graphing2D:
                 elif not False in [isinstance(e, list) or isinstance(e, np.ndarray) or isinstance(e, str) for e in arg]:
                     # list of lists or directories
                     for e in arg:
-                        processed_args.append(arg)
+                        processed_args.append(e)
                 else:
                     raise BadParameter
 
@@ -63,27 +88,6 @@ class Graphing2D:
 
             else:
                 raise BadParameter
-
-        self._legends = []
-        self._x = 0
-        self._y = 1
-        self._x_error = None
-        self._y_error = None
-
-        self._errorbar_options = {
-            'ecolor' : DEFAULT_COLORS[0],
-            'elinewidth' : None,
-            'capsize' : 0.0,
-            'capthick' : None,
-            'barsabove' : False,
-            'lolims' : False,
-            'uplims' : False,
-            'xlolims' : False,
-            'xuplims' : False,
-            'errorevery' : 1
-        }
-
-        self.set_working_data(0, 1)
 
     def set_working_data(self, x_name, y_name, x_error_name=None, y_error_name=None):
         x = self._get_column_input(x_name)
