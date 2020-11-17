@@ -51,7 +51,6 @@ class Graphing2D:
             if isinstance(arg, str):
                 processed_args.append(arg)
             elif isinstance(arg, list) or isinstance(arg, np.ndarray):
-                print([type(i) for i in arg])
                 if not False in [self._is_number(e) for e in arg]:
                     # list of numbers
                     processed_args.append(arg)
