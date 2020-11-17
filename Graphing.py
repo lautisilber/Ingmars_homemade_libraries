@@ -20,36 +20,45 @@ class Graphing2D:
         if not args:
             raise ParameterMissing
 
-        if len(args) == 1:
-            if not isinstance(args[0], str):
-                raise BadParameter
-            if args[0].endswith('.csv'):
-                _file = pd.read_csv(args[0], sep=';')
-            elif args[0].endswith('.tsv'):
-                _file = pd.read_csv(args[0], sep='\t')
-            elif args[0].endswith('.xlsx'):
-                _file = pd.read_xlsx(args[0])
+        unraw_args = []
+        for arg in args:
+            if isinstance(arg, str) or isinstance(arg, np.ndarray):
+                unraw_args.append(arg)
+            elif isinstance(arg, list):
+                if False in [isinstance(i, float) or isinstance(i, int) for i in arg]:
+                    #is list of lists
+                    for l in arg:
+                        unraw_args.append(l)
+                else:
+                    unraw_args.append(arg)
+
+        for arg in args:
+            if isinstance(arg, str):
+                if arg.endswith('.csv'):
+                    _file = pd.read_csv(arg, sep=';')
+                elif arg.endswith('.tsv'):
+                    _file = pd.read_csv(arg, sep='\t')
+                elif arg.endswith('.xlsx'):
+                    _file = pd.read_excel(arg)
+                else:
+                    raise BadParameter
+
+                i = 0
+                for h in _file:
+                    self._data.append(np.array(_file[h]))
+                    self._headers.update({h : i})
+                    i += 1
+
+            elif isinstance(arg, list) or isinstance(arg, np.ndarray):
+                if isinstance(arg, np.ndarray):
+                    self._data.append(arg)
+                else:
+                    self._data.append(np.array(arg))
+                for i in range(len(self._data[-1])):
+                    self._headers.update({str(i) : i})
+
             else:
                 raise BadParameter
-            i = 0
-            for h in _file:
-                self._data.append(list())
-                for n in _file[h]:
-                    self._data[-1].append(n)
-                self._headers.update({h : i})
-                i += 1
-        else:
-            for arg in args:
-                if not isinstance(arg, list):
-                    raise BadParameter
-                for c in arg:
-                    if not (isinstance(c, int) or isinstance(c, float)):
-                        raise BadParameter
-            i = 0
-            for arg in args:
-                self._data.append(arg)
-                self._headers.update({str(i) : i})
-                i += 1
 
         self._legends = []
         self._x = 0
@@ -411,14 +420,14 @@ class NonExistingData(Exception):
     pass
 
 if __name__ == '__main__':
-    a = list(range(7))
-    b = [0, 2, 4.1, 5.9, 8,2, 9.8]
-    c = [0, 1.05, 4.1, 9.2, 15, 26, 35]
+    a = list(range(11))
+    b = [i**2 for i in a]
+    aerror = [1 for i in a]
+    berror = [0.75 for i in a]
 
-    g = Graphing2D(a, b, c)
-
-    g.add_plot()
-    g.add_linear_fit(colour='blue', autolegend=True)
-    g.add_plot(0, 2, colour='orange', autolegend=True)
-    g.add_quadratic_fit(colour='red', autolegend=True)
+    g = Graphing2D(a, b, aerror, berror)
+    g.add_marker(a[5], b[5], legend='supermarker', colour=DEFAULT_COLORS[6], marker='H', s=1500)
+    g.set_working_data(0, 1, 2, 3)
+    g.set_errorbars_options(capsize=1.5, ecolor='cyan')
+    g.add_plot(errorbars=True)
     g.show()
