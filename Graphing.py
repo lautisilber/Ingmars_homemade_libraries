@@ -51,7 +51,8 @@ class Graphing2D:
             if isinstance(arg, str):
                 processed_args.append(arg)
             elif isinstance(arg, list) or isinstance(arg, np.ndarray):
-                if not False in [isinstance(e, float) or isinstance(e, int) for e in arg]:
+                print([type(i) for i in arg])
+                if not False in [self._is_number(e) for e in arg]:
                     # list of numbers
                     processed_args.append(arg)
                 elif not False in [isinstance(e, list) or isinstance(e, np.ndarray) or isinstance(e, str) for e in arg]:
@@ -329,11 +330,11 @@ class Graphing2D:
                 _colour = kwargs['color']
 
         if 'x_shift' in kwargs:
-            if not (isinstance(kwargs['x_shift'], float) or isinstance(kwargs['x_shift'], int)):
+            if not self._is_number(kwargs['x_shift']):
                 raise BadParameter
             _x_shift = kwargs['x_shift']
         if 'y_shift' in kwargs:
-            if not (isinstance(kwargs['y_shift'], float) or isinstance(kwargs['y_shift'], int)):
+            if not self._is_number(kwargs['y_shift']):
                 raise BadParameter
             _y_shift = kwargs['y_shift']
 
@@ -349,12 +350,12 @@ class Graphing2D:
                     if not (isinstance(kwargs['marker'], str) or isinstance(kwargs['marker'], int)):
                         raise BadParameter
                     if isinstance(kwargs['marker'], str):
-                        if kwargs['marker'] in _SCATTER_STYLES or (kwargs['marker'].startswith('$') and kwargs['marker'].endswith('4')):
+                        if kwargs['marker'] in _SCATTER_STYLES or (kwargs['marker'].startswith('$') and kwargs['marker'].endswith('$')):
                             _marker = kwargs['marker']
                     elif kwargs['marker'] in _SCATTER_STYLES:
                         _marker = kwargs['marker']
                 if 's' in kwargs:
-                    if not (isinstance(kwargs['s'], float) or isinstance(kwargs['s'], int)):
+                    if not self._is_number(kwargs['s']):
                         raise BadParameter
                     _s = kwargs['s']
 
@@ -380,6 +381,12 @@ class Graphing2D:
         elif isinstance(param, int):
             return param
         raise BadParameter
+
+    @staticmethod
+    def _is_number(val):
+        if isinstance(val, int) or isinstance(val, float) or isinstance(val, np.int64) or isinstance(val, np.float):
+            return True
+        return False
 
     def show(self):
         _show_legends = False
