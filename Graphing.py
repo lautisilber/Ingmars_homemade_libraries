@@ -7,9 +7,10 @@ from Logging import log
 _COLOURS = ['blue', 'red', 'orange', 'black', 'green', 'cyan', 'yellow', 'magenta', 'white', 'b', 'g', 'r', 'c', 'm', 'k', 'w', '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
 DEFAULT_COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
 _ERRORBAR_OPTION_TYPES = {'ecolor' : '', 'elinewidth' : 0.0, 'capsize' : 0.0, 'capthick' : 0.0, 'barsabove' : False, 'lolims' : False, 'uplims' : False, 'xlolims' : False, 'xuplims' : False, 'errorevery' : 1}
-_PLOT_KWARGS = ['autoaxis', 'autolegend', 'legend', 'customlegend', 'colour', 'color', 'x_shift', 'y_shift', 'errorbars']
-_SCATTER_KWARGS = ['marker', 's']
-_SCATTER_STYLES = ['.', ',', 'o', 'v', '^', '<', '>', '1', '2', '3', '4', '8', 's', 'p', 'P', '*', 'h', 'H', '+', 'x', 'X', 'D', 'd', '|', '_', 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] # or expression between $
+_PLOT_KWARGS = ['autoaxis', 'autolegend', 'legend', 'customlegend', 'colour', 'color', 'x_shift', 'y_shift', 'errorbars', 'marker', 'linestyle']
+_SCATTER_KWARGS = ['s']
+_MARKER_STYLES = ['.', ',', 'o', 'v', '^', '<', '>', '1', '2', '3', '4', '8', 's', 'p', 'P', '*', 'h', 'H', '+', 'x', 'X', 'D', 'd', '|', '_', 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] # or expression between $
+_LINE_STYLES = ['-', '--', '.', '-:', ':', 'solid', 'dotted', 'dashed', 'dashdot', (0, (1, 10)), (0, (1, 1)), (0, (5, 10)), (0, (5, 1)), (0, (3, 10, 1, 10)), (0, (3, 5, 1, 5)), (0, (3, 1, 1, 1)), (0, (3, 5, 1, 5, 1, 5)), (0, (3, 10, 1, 10, 1, 10)), (0, (3, 1, 1, 1, 1, 1))]
 
 class Graphing2D:
     def __init__(self, *args):    
@@ -144,12 +145,12 @@ class Graphing2D:
             self._manage_working_data_args(args)        
 
         # manage kwargs
-        _finallegend, _colour, _x_shift, _y_shift, _errorbars, _marker, _s = self._manage_kwargs(kwargs)
+        _finallegend, _colour, _x_shift, _y_shift, _errorbars, _marker, _s, _linestyle = self._manage_kwargs(kwargs)
 
         X = [x + _x_shift for x in self._data[self._x]]
         Y = [y + _y_shift for y in self._data[self._y]]
 
-        plt.plot(X, Y, label=_finallegend, color=_colour)
+        plt.plot(X, Y, label=_finallegend, color=_colour, marker=_marker, linestyle=_linestyle)
         if _errorbars:
             self._add_errorbars(X, Y) 
 
@@ -159,7 +160,7 @@ class Graphing2D:
             self._manage_working_data_args(args) 
 
         # manage kwargs
-        _finallegend, _colour, _x_shift, _y_shift, _errorbars, _marker, _s = self._manage_kwargs(kwargs, scatter=True)
+        _finallegend, _colour, _x_shift, _y_shift, _errorbars, _marker, _s, _linestyle = self._manage_kwargs(kwargs, scatter=True)
 
         X = [x + _x_shift for x in self._data[self._x]]
         Y = [y + _y_shift for y in self._data[self._y]]
@@ -178,12 +179,12 @@ class Graphing2D:
 
         yf = np.array([m*x+b for x in self._data[self._x]])
 
-        _finallegend, _colour, _x_shift, _y_shift, _errorbars, _marker, _s = self._manage_kwargs(kwargs, fit='linear', m=m, b=b)
+        _finallegend, _colour, _x_shift, _y_shift, _errorbars, _marker, _s, _linestyle = self._manage_kwargs(kwargs, fit='linear', m=m, b=b)
 
         X = [x + _x_shift for x in self._data[self._x]]
         Y = [y + _y_shift for y in yf]
 
-        plt.plot(X, Y, label=_finallegend, color=_colour)
+        plt.plot(X, Y, label=_finallegend, color=_colour, marker=_marker, linestyle=_linestyle)
         if _errorbars:
             self._add_errorbars(X, Y)
 
@@ -197,12 +198,12 @@ class Graphing2D:
 
         yf = np.array([p[0]*(x**2) + p[1]*x + p[2] for x in self._data[self._x]])
 
-        _finallegend, _colour, _x_shift, _y_shift, _errorbars, _marker, _s = self._manage_kwargs(kwargs, fit='quadratic', a=p[0], b=p[1], c=p[2])
+        _finallegend, _colour, _x_shift, _y_shift, _errorbars, _marker, _s, _linestyle = self._manage_kwargs(kwargs, fit='quadratic', a=p[0], b=p[1], c=p[2])
 
         X = [x + _x_shift for x in self._data[self._x]]
         Y = [y + _y_shift for y in yf]
 
-        plt.plot(X, Y, label=_finallegend, color=_colour)
+        plt.plot(X, Y, label=_finallegend, color=_colour, marker=_marker, linestyle=_linestyle)
         if _errorbars:
             self._add_errorbars(X, Y)
 
@@ -220,18 +221,18 @@ class Graphing2D:
 
         yf = np.array([np.exp(p[1]) * np.exp(p[0]*x) for x in self._data[self._x]])
         
-        _finallegend, _colour, _x_shift, _y_shift, _errorbars, _marker, _s = self._manage_kwargs(kwargs, fit='exponential', k=np.exp(p[1]), gamma = p[0])
+        _finallegend, _colour, _x_shift, _y_shift, _errorbars, _marker, _s, _linestyle = self._manage_kwargs(kwargs, fit='exponential', k=np.exp(p[1]), gamma = p[0])
 
         X = [x + _x_shift for x in self._data[self._x]]
         Y = [y + _y_shift for y in yf]
 
-        plt.plot(X, Y, label=_finallegend, color=_colour)
+        plt.plot(X, Y, label=_finallegend, color=_colour, marker=_marker, linestyle=_linestyle)
         if _errorbars:
             self._add_errorbars(X, Y)
 
     def add_marker(self, x_pos, y_pos, **kwargs):
         # to date only args supported is style (shape)
-        _finallegend, _colour, _x_shift, _y_shift, _errorbars, _marker, _s = self._manage_kwargs(kwargs, scatter=True)
+        _finallegend, _colour, _x_shift, _y_shift, _errorbars, _marker, _s, _linestyle = self._manage_kwargs(kwargs, scatter=True)
         
         x = x_pos + _x_shift
         y = y_pos + _y_shift
@@ -266,8 +267,9 @@ class Graphing2D:
         _x_shift = 0
         _y_shift = 0
         _errorbars = False
-        _marker = rcParams['scatter.marker']
+        _marker = None
         _s = rcParams['lines.markersize'] ** 2
+        _linestyle = 'solid'
 
         for k in kwargs:
             if not (k in _PLOT_KWARGS or k in _SCATTER_KWARGS):
@@ -345,20 +347,31 @@ class Graphing2D:
 
         if 'scatter' in nkwargs:
             if nkwargs['scatter']:
-                if 'marker' in kwargs:
-                    if not (isinstance(kwargs['marker'], str) or isinstance(kwargs['marker'], int)):
-                        raise BadParameter
-                    if isinstance(kwargs['marker'], str):
-                        if kwargs['marker'] in _SCATTER_STYLES or (kwargs['marker'].startswith('$') and kwargs['marker'].endswith('$')):
-                            _marker = kwargs['marker']
-                    elif kwargs['marker'] in _SCATTER_STYLES:
-                        _marker = kwargs['marker']
+                _marker = rcParams['scatter.marker']
                 if 's' in kwargs:
                     if not self._is_number(kwargs['s']):
                         raise BadParameter
                     _s = kwargs['s']
 
-        return _finallegend, _colour, _x_shift, _y_shift, _errorbars, _marker, _s
+        if 'marker' in kwargs:
+                    if not (isinstance(kwargs['marker'], str) or isinstance(kwargs['marker'], int)):
+                        raise BadParameter
+                    if isinstance(kwargs['marker'], str):
+                        if kwargs['marker'] in _MARKER_STYLES or (kwargs['marker'].startswith('$') and kwargs['marker'].endswith('$')):
+                            _marker = kwargs['marker']
+                    elif kwargs['marker'] in _MARKER_STYLES:
+                        _marker = kwargs['marker']
+                    if not kwargs['marker'] in _MARKER_STYLES or (kwargs['marker'].startswith('$') and kwargs['marker'].endswith('$')):
+                        log.warning('Not supported marker!')
+
+        if 'linestyle' in kwargs:
+            if not kwargs['linestyle'] in _LINE_STYLES:
+                log.warning('Not supported linestyle!')
+            else:
+                _linestyle = kwargs['linestyle']
+
+
+        return _finallegend, _colour, _x_shift, _y_shift, _errorbars, _marker, _s, _linestyle
 
     def _manage_working_data_args(self, args):
         if len(args) == 2:
@@ -436,12 +449,15 @@ class NonExistingData(Exception):
 if __name__ == '__main__':
     a = list(range(11))
     b = [i**2 for i in a]
-    aerror = [1 for i in a]
-    berror = [0.75 for i in a]
+    aerror = [3 for i in a]
+    berror = [0.5 for i in a]
+    c = [40 for i in a]
 
     g = Graphing2D([a, b], [aerror, berror])
     g.add_marker(a[5], b[5], legend='supermarker', colour=DEFAULT_COLORS[6], marker='H', s=150)
     g.set_working_data(0, 1, 2, 3)
-    g.set_errorbars_options(capsize=1.5, ecolor='cyan')
+    g.set_errorbars_options(capsize=1.5, ecolor='green')
     g.add_plot(errorbars=True)
+    g.add_data(c)
+    g.add_plot(0, 4, linestyle='--', colour=DEFAULT_COLORS[3])
     g.show()

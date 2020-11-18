@@ -25,18 +25,21 @@ REVERSED = '\u001b[7m'
 class log:
     @staticmethod
     def info(message):
-        log.colourprint(message + '\n', FG_GREEN)
+        print(FG_GREEN + message + RESET)
 
     @staticmethod
     def warning(message):
-        log.colourprint('WARNING: ', FG_YELLOW, UNDERLINE)
-        log.colourprint(message + '\n', FG_YELLOW)
+        print(FG_YELLOW + UNDERLINE + 'WARNING' + RESET + FG_YELLOW + ': ' + message + RESET)
 
     @staticmethod
     def error(message):
-        log.colourprint('ERROR: ', FG_BLACK, BG_RED, UNDERLINE)
-        log.colourprint(message + '\n', FG_BLACK, BG_RED)
+        print(FG_BLACK + BG_RED + UNDERLINE + 'ERROR' + RESET + FG_BLACK + BG_RED + ': ' + message + RESET)
 
     @staticmethod
     def colourprint(message, *args):
-        print(''.join(args) + message + RESET, end='')
+        print(''.join(args) + message + RESET)
+
+if __name__ == '__main__':
+    log.info('this is a piece of information')
+    log.warning('this is a warning')
+    log.error('this is an error')
